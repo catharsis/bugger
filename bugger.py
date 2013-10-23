@@ -1,6 +1,7 @@
 import sys
 import mechanize
 from bug import Bug
+import textwrap
 class Bugger(object):
 	def __init__(self, url):
 		self.url = url
@@ -15,5 +16,9 @@ if __name__ == '__main__':
 	sys.setdefaultencoding("utf-8")
 	url = 'http://tracker.nagios.org/'
 	bug_id = 504
-
-	print Bugger(url).bug(bug_id)
+	bug = Bugger(url).bug(bug_id)
+	print bug.summary
+	print
+	print textwrap.fill("Description: " + bug.description)
+	print
+	print textwrap.fill("Additional Information: " + bug.additional_information)
