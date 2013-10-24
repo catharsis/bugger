@@ -38,8 +38,11 @@ if __name__ == '__main__':
 		output += bug.summary
 		output += "\n"
 		output += "Description: " + bug.description
-		output += "\n"
-		output += "Additional Information: " + bug.additional_information
+		try:
+			output += "\nAdditional Information: " + bug.additional_information
+		except AttributeError:
+			# No additional info found
+			pass
 	except BugNotFound:
 		output = "Sorry, that bug doesn't exist."
 
