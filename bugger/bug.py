@@ -1,7 +1,11 @@
 from bs4 import BeautifulSoup
 import re,string
+from collections import defaultdict
 class BugNotFound(Exception): pass
 class MarkupParseError(Exception): pass
+class BugRenderError(Exception): pass
+class DefaultBugTemplate(string.Template):
+	idpattern = '[_A-Za-z][ _A-Za-z0-9]*.'
 class Bug(object):
 
 	@staticmethod
@@ -80,9 +84,39 @@ class Bug(object):
 	def from_markup(cls, markup):
 		return cls(markup=markup)
 
+	def render(self, template_string=None, template_cls=DefaultBugTemplate):
+		if not issubclass(template_cls, DefaultBugTemplate):
+			raise BugRenderError("Invalid template class!")
+		if not template_string:
+			template_string = self._default_template_string
+		template = template_cls(template_string)
+		def missing_field(key):
+			try:
+				return getattr(self, key)
+			except AttributeError:
+				return ""
+
+		attr_dict = fielddict(missing_field)
+		for (k,v) in [(self.attr2field(attr), val) for (attr, val) in self.__dict__.items()]:
+			attr_dict[k] = v
+
+		output = template.substitute(attr_dict)
+		return output
 
 	def submit(self):
 		pass
 
 	def __str__(self):
 		return (self.summary)
+
+	_default_template_string = """Summary: ${Summary}
+Description: ${Description}
+Reported by: ${Reporter}
+Additional Information: ${Additional Information}"""
+
+class fielddict(defaultdict):
+	def __missing__(self, key):
+		if self.default_factory is None:
+			raise KeyError(key)
+		self[key] = value = self.default_factory(key)
+		return value

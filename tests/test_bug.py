@@ -1,5 +1,6 @@
 from nose.tools import *
 import sys
+from string import Template
 from bugger import bug
 
 def test_html_construct():
@@ -41,10 +42,30 @@ embedded control characters are also OK, like \n and \t and stuff..
 	my_bug = bug.Bug.from_markup(markup)
 	eq_(u'A test bug!', my_bug.summary.strip())
 	eq_(u'This is the strangest bug', my_bug.some_field.strip())
-	print repr(multiline_value)
-	print repr(my_bug.multiline)
 	eq_(multiline_value, my_bug.multiline)
 
 @raises(bug.BugNotFound)
 def test_raises_BugNotFound():
 	bug.Bug(html="This is clearly not an HTML bug")
+
+def test_render():
+	markup = '''
+	# Summary: A test bug!
+	# Some Field: This is the strangest bug
+	'''
+
+	template = '''	__Summary__
+	${Summary}
+	--------------------
+	${Some Field}
+	'''
+	my_bug = bug.Bug.from_markup(markup)
+	output = my_bug.render(template)
+	ok_("the strangest bug" in output)
+	ok_("A test bug!" in output)
+
+	template = ''' Oops: ${Missing Field} '''
+	output = my_bug.render(template)
+	ok_("Oops: " in output)
+
+

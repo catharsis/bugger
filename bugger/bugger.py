@@ -40,6 +40,7 @@ if __name__ == '__main__':
 	parser = argparse.ArgumentParser(description='Mechanized Mantis', formatter_class=argparse.ArgumentDefaultsHelpFormatter)
 	parser.set_defaults(**dict(configparser.items('bugger')))
 	parser.add_argument('--url', '-u', help='URL to Mantis')
+	parser.add_argument('--template', '-t', help='Path to rendering template for bugs')
 	parser.add_argument('id', type=int, help='ID of the bug to operate on')
 	args = parser.parse_args()
 	url = args.url
@@ -47,14 +48,7 @@ if __name__ == '__main__':
 	output = ""
 	try:
 		bug = Bugger(url).bug(bug_id)
-		output += bug.summary
-		output += "\n"
-		output += "Description: " + bug.description
-		try:
-			output += "\nAdditional Information: " + bug.additional_information
-		except AttributeError:
-			# No additional info found
-			pass
+		output = bug.render(args.template)
 	except BugNotFound:
 		output = "Sorry, that bug doesn't exist."
 
