@@ -1,7 +1,6 @@
 from nose.tools import *
 import sys
-sys.path.append('../..')
-from bugger import *
+from bugger import bug
 
 def test_html_construct():
 	html = '''
@@ -27,9 +26,13 @@ def test_markup_construct():
 	multiline_value = '''
 	this is a value
 
-
 	spanning over
-	multiple lines
+	multiple lines ...
+			it has tabs in it too
+		which the parser
+			doesn't mess up
+
+embedded control characters are also OK, like \n and \t and stuff..
 	'''
 	markup = '''
 	# Summary: A test bug!
