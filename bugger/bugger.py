@@ -42,8 +42,8 @@ if __name__ == '__main__':
 	parser.add_argument('--url', '-u', help='URL to Mantis')
 	parser.add_argument('id', type=int, help='ID of the bug to operate on')
 	args = parser.parse_args()
+	url = args.url
 	bug_id = args.id
-	print url
 	output = ""
 	try:
 		bug = Bugger(url).bug(bug_id)
