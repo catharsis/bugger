@@ -1,4 +1,5 @@
-import sys, os
+import sys
+from os.path import expanduser
 import mechanize
 from bug import Bug, BugNotFound
 import textwrap
@@ -29,10 +30,12 @@ if __name__ == '__main__':
 	sys.setdefaultencoding("utf-8")
 	configparser = SafeConfigParser()
 	url = None
-	try:
-		configparser.readfp(open(os.path.expanduser('~/.buggerrc')))
-	except IOError: #no config file
-		pass
+	for p in [expanduser('~/.buggerrc'), expanduser('~/.config/bugger/buggerrc')]:
+		try:
+			configparser.readfp(open(p))
+			break #success, break
+		except IOError: #no such config file?
+			pass
 
 	parser = argparse.ArgumentParser(description='Mechanized Mantis', formatter_class=argparse.ArgumentDefaultsHelpFormatter)
 	parser.set_defaults(**dict(configparser.items('bugger')))
