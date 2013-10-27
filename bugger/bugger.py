@@ -1,9 +1,10 @@
-import sys
+import sys, os
 import mechanize
 from bug import Bug, BugNotFound
 import textwrap
 import argparse
 import pydoc
+from ConfigParser import SafeConfigParser
 
 class NoPaging(Exception): pass
 def windowsize():
@@ -26,12 +27,20 @@ class Bugger(object):
 if __name__ == '__main__':
 	reload(sys)
 	sys.setdefaultencoding("utf-8")
-	parser = argparse.ArgumentParser(description='Mechanized Mantis')
-	parser.add_argument('url', help='URL to Mantis')
+	configparser = SafeConfigParser()
+	url = None
+	try:
+		configparser.readfp(open(os.path.expanduser('~/.buggerrc')))
+	except IOError: #no config file
+		pass
+
+	parser = argparse.ArgumentParser(description='Mechanized Mantis', formatter_class=argparse.ArgumentDefaultsHelpFormatter)
+	parser.set_defaults(**dict(configparser.items('bugger')))
+	parser.add_argument('--url', '-u', help='URL to Mantis')
 	parser.add_argument('id', type=int, help='ID of the bug to operate on')
 	args = parser.parse_args()
-	url = args.url
 	bug_id = args.id
+	print url
 	output = ""
 	try:
 		bug = Bugger(url).bug(bug_id)
