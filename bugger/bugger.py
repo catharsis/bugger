@@ -30,7 +30,7 @@ def main_func():
 	sys.setdefaultencoding("utf-8")
 	configparser = SafeConfigParser()
 	url = None
-	for p in [expanduser('~/.buggerrc'), expanduser('~/.config/bugger/buggerrc')]:
+	for p in ['.buggerrc', expanduser('~/.buggerrc'), expanduser('~/.config/bugger/buggerrc')]:
 		try:
 			configparser.readfp(open(p))
 			break #success, break
