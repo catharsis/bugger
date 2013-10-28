@@ -1,6 +1,8 @@
 import sys
 from os.path import expanduser
+import re
 import mechanize
+from bs4 import BeautifulSoup
 from bug import Bug, BugNotFound
 import textwrap
 import argparse
@@ -8,6 +10,8 @@ import pydoc
 from ConfigParser import SafeConfigParser, NoSectionError
 
 class NoPaging(Exception): pass
+class BuggerLoginError(Exception): pass
+
 def windowsize():
 	from fcntl import ioctl
 	from termios import TIOCGWINSZ
@@ -17,9 +21,23 @@ def windowsize():
 	return (winsize[1], winsize[0])
 
 class Bugger(object):
+	texts = {"access_denied": re.compile("Your account may be disabled or blocked or the username/password you entered is incorrect.")}
 	def __init__(self, url):
 		self.url = url
 		self.browser = mechanize.Browser()
+		self.browser.set_handle_refresh(mechanize._http.HTTPRefreshProcessor(), max_time=1)
+
+	def login(self, username, password):
+		self.browser.open("%s/login_page.php" % self.url)
+		self.browser.select_form("login_form")
+		self.browser.method = "POST"
+		username_control = self.browser.find_control("username")
+		password_control = self.browser.find_control("password")
+		username_control.value = username
+		password_control.value = password
+		soup = BeautifulSoup(self.browser.submit())
+		if soup.find("div", text=self.texts["access_denied"]):
+			raise BuggerLoginError("Login failed for '%s'" % username)
 
 	def bug(self, bug_id):
 		response = self.browser.open("%s/view.php?id=%d" % ( self.url, bug_id))
