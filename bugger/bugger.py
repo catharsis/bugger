@@ -5,7 +5,7 @@ from bug import Bug, BugNotFound
 import textwrap
 import argparse
 import pydoc
-from ConfigParser import SafeConfigParser
+from ConfigParser import SafeConfigParser, NoSectionError
 
 class NoPaging(Exception): pass
 def windowsize():
@@ -25,7 +25,7 @@ class Bugger(object):
 		response = self.browser.open("%s/view.php?id=%d" % ( self.url, bug_id))
 		return Bug(response.read())
 
-if __name__ == '__main__':
+def main_func():
 	reload(sys)
 	sys.setdefaultencoding("utf-8")
 	configparser = SafeConfigParser()
@@ -38,7 +38,13 @@ if __name__ == '__main__':
 			pass
 
 	parser = argparse.ArgumentParser(description='Mechanized Mantis', formatter_class=argparse.ArgumentDefaultsHelpFormatter)
-	parser.set_defaults(**dict(configparser.items('bugger')))
+	try:
+		parser.set_defaults(**dict(configparser.items('bugger')))
+	except NoSectionError:
+		fallback_defaults = {
+				'url': 'http://tracker.example.com',
+				}
+		parser.set_defaults(**fallback_defaults)
 	parser.add_argument('--url', '-u', help='URL to Mantis')
 	parser.add_argument('--template', '-t', help='Path to rendering template for bugs')
 	parser.add_argument('id', type=int, help='ID of the bug to operate on')
@@ -61,3 +67,7 @@ if __name__ == '__main__':
 	except (IOError, NoPaging):
 		print(output)
 		pass
+
+
+if __name__ == '__main__':
+	main_func()

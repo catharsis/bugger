@@ -1,3 +1,4 @@
+#!/usr/bin/python2
 #coding=utf-8
 from setuptools import setup, find_packages
 from subprocess import check_output
@@ -16,5 +17,10 @@ setup(
 		license = "BSD (2-clause)",
 		keywords = "mantis mechanize bugger bugs bug tracker issue issues",
 		url = "https://github.com/catharsis/bugger",
-		install_requires = open('requirements.txt').read().split('\n')
+		install_requires = open('requirements.txt').read().split('\n'),
+		entry_points = {
+			'console_scripts': [
+				'bugger = bugger.bugger:main_func',
+				],
+			}
 		)
