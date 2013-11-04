@@ -1,5 +1,5 @@
 import sys
-from os.path import expanduser
+from os.path import expanduser, exists
 import re
 import mechanize
 from bs4 import BeautifulSoup
@@ -72,7 +72,12 @@ def main_func():
 	output = ""
 	try:
 		bug = Bugger(url).bug(bug_id)
-		output = bug.render(args.template)
+		template = None
+		print args.template
+		if exists(expanduser(args.template)):
+			with open(expanduser(args.template)) as tf:
+				template = tf.read()
+		output = bug.render(template)
 	except BugNotFound:
 		output = "Sorry, that bug doesn't exist."
 
