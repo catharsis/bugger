@@ -7,7 +7,7 @@ class BugRenderError(Exception): pass
 class DefaultBugTemplate(string.Template):
 	idpattern = '[_A-Za-z][ _A-Za-z0-9]*.'
 class Bug(object):
-
+	vertical_fields = ['ID', 'Project', 'Category', 'View Status', 'Date Submitted', 'Last Update']
 	@staticmethod
 	def attr2field(name):
 		'''
@@ -40,11 +40,23 @@ class Bug(object):
 			for text in texts:
 				element = self.soup.find("td", text=text)
 				if element:
+					element = element.find_next_sibling()
+
 					break
 			else:
 				raise AttributeError
 
-			return element.find_next_sibling().text.strip()
+			if name in self.vertical_fields:
+				#vertical fields have the field name above their value
+				# instead of to the left of it
+				i = 0
+				row = element.parent
+				while element:
+					element = element.find_previous_sibling()
+					i += 1
+
+				element = row.find_next_sibling().find_all("td", limit=i-1)[-1]
+			return element.text.strip()
 		raise AttributeError
 
 	def __init__(self, html=None, markup=None):
