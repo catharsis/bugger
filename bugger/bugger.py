@@ -8,7 +8,6 @@ import textwrap
 import argparse
 import pydoc
 from ConfigParser import SafeConfigParser, NoSectionError
-
 class NoPaging(Exception): pass
 class BuggerLoginError(Exception): pass
 
@@ -65,12 +64,19 @@ def main_func():
 		parser.set_defaults(**fallback_defaults)
 	parser.add_argument('--url', '-u', help='URL to Mantis')
 	parser.add_argument('--template', '-t', help='Path to rendering template for bugs')
+	parser.add_argument('--username', help='Mantis username')
+	parser.add_argument('--password', help='Mantis password')
 	parser.add_argument('id', type=int, help='ID of the bug to operate on')
 	args = parser.parse_args()
 	url = args.url
 	bug_id = args.id
 	output = ""
+	username = args.username
+	password = args.password
 	try:
+		bugger = Bugger(url)
+		if username and password:
+			bugger.login(username, password)
 		bug = Bugger(url).bug(bug_id)
 		template = None
 		print args.template
@@ -80,6 +86,8 @@ def main_func():
 		output = bug.render(template)
 	except BugNotFound:
 		output = "Sorry, that bug doesn't exist."
+	except BuggerLoginError:
+		output = "Login failed for user '%s', please check your username and password" % username
 
 	try:
 		width, height = windowsize()
