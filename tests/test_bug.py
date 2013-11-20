@@ -16,12 +16,21 @@ def test_html_construct():
 						A test bug!
 					</td>
 				</tr>
+				<tr>
+					<td id='level_of_effort'>
+						level_of_effort
+					</td>
+					<td>
+						1-2 days
+					</td>
+				</tr>
 			<table>
 		</body
 	</html>
 	'''
 	my_bug = bug.Bug.from_html(html)
 	eq_(u'A test bug!', my_bug.summary)
+	eq_(u'1-2 days', my_bug.level_of_effort)
 
 def test_markup_construct():
 	multiline_value = '''

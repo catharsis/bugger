@@ -29,15 +29,21 @@ class Bug(object):
 		'information'
 		>>> Bug.field2attr('Another Field')
 		'another_field'
+		>>> Bug.field2attr('the_underscored_field')
+		'the_underscored_field'
 		'''
 		return name.replace(' ', '_').lower()
 
 	def __getattr__(self, name):
 		if name != 'soup' and self.soup:
-			text = re.compile(self.attr2field(name))
-			element = self.soup.find("td", text=text)
-			if not element:
+			texts = [re.compile(self.attr2field(name)), re.compile(name)]
+			for text in texts:
+				element = self.soup.find("td", text=text)
+				if element:
+					break
+			else:
 				raise AttributeError
+
 			return element.find_next_sibling().text.strip()
 		raise AttributeError
 
