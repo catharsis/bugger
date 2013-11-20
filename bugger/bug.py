@@ -62,18 +62,12 @@ class Bug(object):
 	def __init__(self, html=None, markup=None):
 		if html:
 			self.soup = BeautifulSoup(html)
-			try:
-				self.summary
-			except AttributeError:
-				raise BugNotFound
 		elif markup:
 			for attr,val in self.parse_markup(markup):
 				setattr(self, self.field2attr(attr), val)
-			try:
-				self.summary
-			except AttributeError:
-				raise BugNotFound
-		else:
+		try:
+			self.summary
+		except AttributeError:
 			raise BugNotFound
 
 	@staticmethod
