@@ -36,7 +36,7 @@ class Bug(object):
 
 	def __getattr__(self, name):
 		if name != 'soup' and self.soup:
-			texts = [re.compile(self.attr2field(name)), re.compile(name)]
+			texts = [re.compile('^'+self.attr2field(name)+'$'), re.compile('^'+name+'$')]
 			for text in texts:
 				element = self.soup.find("td", text=text)
 				if element:
