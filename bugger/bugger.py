@@ -51,17 +51,6 @@ Additional Information: ${Additional Information}"""
 				return tf.read()
 		return self.template_strings[type]
 
-	def do_search(self, text, use_template=None):
-		output = ""
-		template = self.load_template('blurb', use_template)
-		for bug in self.search({'text': text}):
-			output += bug.render(template) + '\n'
-		return output.strip()
-
-	def do_show(self, bug_id, use_template=None):
-		bug = self.bug(bug_id)
-		return bug.render(self.load_template('detailed', use_template))
-
 	def search(self, terms = {'text': ''}):
 		url = "%s/view_all_bug_page.php" % self.url
 		self.browser.open(url)
@@ -78,6 +67,18 @@ Additional Information: ${Additional Information}"""
 	def bug(self, bug_id):
 		response = self.browser.open("%s/view.php?id=%d" % ( self.url, bug_id))
 		return Bug(response.read())
+
+def do_show(bugger, args):
+	bug = bugger.bug(args.id)
+	return bug.render(bugger.load_template('detailed', args.template))
+
+def do_search(bugger, args):
+	output = ""
+	template = bugger.load_template('blurb')
+	for bug in bugger.search({'text': args.term}):
+		output += bug.render(template) + '\n'
+	return output.strip()
+
 
 
 def main_func():
@@ -104,23 +105,24 @@ def main_func():
 	parser.add_argument('--template', '-t', help='Path to rendering template for bugs')
 	parser.add_argument('--username', help='Mantis username')
 	parser.add_argument('--password', help='Mantis password')
-	parser.add_argument('--search', '-s', help="Search for bugs")
-	parser.add_argument('--bug', '-b', type=int, help='Show bug with id BUG')
+
+	subparsers = parser.add_subparsers()
+	search_parser = subparsers.add_parser('search', help='Search for bugs')
+	search_parser.add_argument('term', help='Find bugs matching `term`')
+	search_parser.set_defaults(func=do_search)
+
+	bug_parser = subparsers.add_parser('show', help='View individual bug')
+	bug_parser.add_argument('id', type=int, help='Show bug with id `id`')
+	bug_parser.set_defaults(func=do_show)
+
 	args = parser.parse_args()
-	url = args.url
-	bug_id = args.bug
-	output = ""
-	username = args.username
-	password = args.password
-	search = args.search
+	output = ''
 	try:
-		bugger = Bugger(url)
-		if username and password:
-			bugger.login(username, password)
-		if search:
-			output = bugger.do_search(search)
-		else:
-			output = bugger.do_show(bug_id, args.template)
+		bugger = Bugger(args.url)
+		if args.username and args.password:
+			bugger.login(args.username, args.password)
+
+		output = args.func(bugger, args)
 	except BugNotFound:
 		output = "Sorry, that bug doesn't exist."
 	except BuggerLoginError:
