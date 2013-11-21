@@ -59,12 +59,15 @@ class Bug(object):
 			return element.text.strip()
 		raise AttributeError
 
-	def __init__(self, html=None, markup=None):
+	def __init__(self, html=None, markup=None, dikt=None):
 		if html:
 			self.soup = BeautifulSoup(html)
 		elif markup:
 			for attr,val in self.parse_markup(markup):
 				setattr(self, self.field2attr(attr), val)
+		elif dikt:
+			for k, v in dikt.iteritems():
+				setattr(self, self.field2attr(k), v)
 		try:
 			self.summary
 		except AttributeError:
@@ -96,11 +99,13 @@ class Bug(object):
 	def from_markup(cls, markup):
 		return cls(markup=markup)
 
-	def render(self, template_string=None, template_cls=DefaultBugTemplate):
+	@classmethod
+	def from_dict(cls, dikt):
+		return cls(dikt=dikt)
+
+	def render(self, template_string, template_cls=DefaultBugTemplate):
 		if not issubclass(template_cls, DefaultBugTemplate):
 			raise BugRenderError("Invalid template class!")
-		if not template_string:
-			template_string = self._default_template_string
 		template = template_cls(template_string)
 		def missing_field(key):
 			try:
@@ -120,11 +125,6 @@ class Bug(object):
 
 	def __str__(self):
 		return (self.summary)
-
-	_default_template_string = """Summary: ${Summary}
-Description: ${Description}
-Reported by: ${Reporter}
-Additional Information: ${Additional Information}"""
 
 class fielddict(defaultdict):
 	def __missing__(self, key):
