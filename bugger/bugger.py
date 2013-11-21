@@ -69,8 +69,15 @@ Additional Information: ${Additional Information}"""
 		return Bug(response.read())
 
 def do_show(bugger, args):
-	bug = bugger.bug(args.id)
-	return bug.render(bugger.load_template('detailed', args.template))
+	output = ''
+	for id in args.id:
+		bug = bugger.bug(id)
+		if args.short:
+			template = bugger.load_template('blurb')
+		else:
+			template = bugger.load_template('detailed', args.template)
+		output += bug.render(template) + '\n'
+	return output.strip()
 
 def do_search(bugger, args):
 	output = ""
@@ -93,7 +100,7 @@ def main_func():
 		except IOError: #no such config file?
 			pass
 
-	parser = argparse.ArgumentParser(description='Mechanized Mantis', formatter_class=argparse.ArgumentDefaultsHelpFormatter)
+	parser = argparse.ArgumentParser(description='Mechanized Mantis', formatter_class=argparse.ArgumentDefaultsHelpFormatter, epilog='https://github.com/catharsis/bugger')
 	try:
 		parser.set_defaults(**dict(configparser.items('bugger')))
 	except NoSectionError:
@@ -112,7 +119,8 @@ def main_func():
 	search_parser.set_defaults(func=do_search)
 
 	bug_parser = subparsers.add_parser('show', help='View individual bug')
-	bug_parser.add_argument('id', type=int, help='Show bug with id `id`')
+	bug_parser.add_argument('id', type=int, nargs='+', help='Show bug with id `id`')
+	bug_parser.add_argument('--short', '-s', action='store_true', help='Show blurb for bug with id `id`')
 	bug_parser.set_defaults(func=do_show)
 
 	args = parser.parse_args()
