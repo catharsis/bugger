@@ -56,7 +56,7 @@ class Bug(object):
 				for sibling in element.previous_siblings:
 					i += 1
 
-				element = row.find_next_sibling().find_all("td", limit=i-1)[-1]
+				element = row.find_next_sibling().find_all("td", limit=i)[-1]
 			return element.get_text().strip()
 		raise AttributeError
 
