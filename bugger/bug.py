@@ -36,12 +36,14 @@ class Bug(object):
 
 	def __getattr__(self, name):
 		if name != 'soup' and self.soup:
-			texts = [re.compile('^'+self.attr2field(name)+'$'), re.compile('^'+name+'$')]
-			for text in texts:
-				element = self.soup.find("td", text=text)
+			patterns = [
+					re.compile('^\s*'+self.attr2field(name)+'\s*$'),
+					re.compile('^\s*'+name+'\s*$')
+					]
+			for pattern in patterns:
+				element = self.soup.find("td", text=pattern)
 				if element:
 					element = element.find_next_sibling()
-
 					break
 			else:
 				raise AttributeError
@@ -51,12 +53,11 @@ class Bug(object):
 				# instead of to the left of it
 				i = 0
 				row = element.parent
-				while element:
-					element = element.find_previous_sibling()
+				for sibling in element.previous_siblings:
 					i += 1
 
 				element = row.find_next_sibling().find_all("td", limit=i-1)[-1]
-			return element.text.strip()
+			return element.get_text().strip()
 		raise AttributeError
 
 	def __init__(self, html=None, markup=None, dikt=None):
