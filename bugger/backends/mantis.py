@@ -1,7 +1,46 @@
+import mechanize
 from bs4 import BeautifulSoup
 import re,string
 from collections import defaultdict
-class BugNotFound(Exception): pass
+from bugger.util import levenshtein
+from bugger.exceptions import *
+class Mantis(object):
+	texts = {"access_denied": re.compile("Your account may be disabled or blocked or the username/password you entered is incorrect.")}
+	def __init__(self, url):
+		self.url = url
+		self.browser = mechanize.Browser()
+		self.browser.set_handle_refresh(mechanize._http.HTTPRefreshProcessor(), max_time=1)
+
+	def _open_relative(self, path):
+		try:
+			return self.browser.open("%s%s" % (self.url, path))
+		except mechanize.URLError as e:
+			raise BackendConnectionError(str(e))
+
+	def login(self, username, password):
+		self._open_relative('/login_page.php')
+		self.browser.select_form("login_form")
+		self.browser.method = "POST"
+		username_control = self.browser.find_control("username")
+		password_control = self.browser.find_control("password")
+		username_control.value = username
+		password_control.value = password
+		soup = BeautifulSoup(self.browser.submit())
+		if soup.find("div", text=self.texts["access_denied"]):
+			raise BuggerLoginError("Login failed for '%s'" % username)
+
+	def bug(self, id):
+		response = self._open_relative("/view.php?id=%d" % (id))
+		return Bug(response)
+
+	def search(self, terms={}):
+		self._open_relative("/view_all_bug_page.php")
+		self.browser.select_form('filters_open')
+		search_control = self.browser.find_control("search", type="text")
+		search_control.value = terms['text']
+		soup = BeautifulSoup(self.browser.submit())
+		return Search(soup, terms)
+
 class MarkupParseError(Exception): pass
 class BugRenderError(Exception): pass
 class DefaultBugTemplate(string.Template):
@@ -133,3 +172,41 @@ class fielddict(defaultdict):
 			raise KeyError(key)
 		self[key] = value = self.default_factory(key)
 		return value
+
+
+class Search(object):
+	def __init__(self, html, terms={}):
+		self.html = html
+		self.terms = terms
+
+	def matches(self):
+		# match terms, return match dicts
+		rows = self.html.find(id='buglist').find_all('tr')[1:]
+		matches = []
+		headers = []
+		for column in rows[0].find_all('td'):
+			if column.a:
+				headers.append(column.get_text())
+			else:
+				headers.append('')
+
+		for row in rows[2:]:
+			attr_dict = dict(zip(headers,
+				[col.get_text() for col in row.find_all('td')]
+				))
+			try:
+				yield Bug.from_dict(attr_dict)
+			except BugNotFound:
+				pass
+
+class Filter(object):
+	def __init__(self, name, want_value):
+		self.name = name
+		self.want = want_value
+
+	def is_match(self):
+		return levenshtein.distance(self.value, self.want) <= 2
+
+	def is_equal(self):
+		return self.value == self.want
+

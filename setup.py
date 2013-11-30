@@ -20,7 +20,7 @@ setup(
 		install_requires = open('requirements.txt').read().split('\n'),
 		entry_points = {
 			'console_scripts': [
-				'bugger = bugger.bugger:main_func',
+				'bugger = bugger:main_func',
 				],
 			}
 		)

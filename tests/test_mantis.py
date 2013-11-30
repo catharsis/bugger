@@ -1,8 +1,8 @@
 from nose.tools import *
 import sys
 from string import Template
-from bugger import bug
-
+import bugger
+from bugger.backends.mantis import Mantis, Bug
 def test_html_construct():
 	html = '''
 	<html>
@@ -28,7 +28,7 @@ def test_html_construct():
 		</body
 	</html>
 	'''
-	my_bug = bug.Bug.from_html(html)
+	my_bug = Bug.from_html(html)
 	eq_(u'A test bug!', my_bug.summary)
 	eq_(u'1-2 days', my_bug.level_of_effort)
 
@@ -48,14 +48,14 @@ embedded control characters are also OK, like \n and \t and stuff..
 	# Summary: A test bug!
 	# Some Field: This is the strangest bug
 	# Multiline:{multiline}'''.format(multiline=multiline_value)
-	my_bug = bug.Bug.from_markup(markup)
+	my_bug = Bug.from_markup(markup)
 	eq_(u'A test bug!', my_bug.summary.strip())
 	eq_(u'This is the strangest bug', my_bug.some_field.strip())
 	eq_(multiline_value, my_bug.multiline)
 
-@raises(bug.BugNotFound)
+@raises(bugger.BugNotFound)
 def test_raises_BugNotFound():
-	bug.Bug(html="This is clearly not an HTML bug")
+	Bug(html="This is clearly not an HTML bug")
 
 def test_render():
 	markup = '''
@@ -68,7 +68,7 @@ def test_render():
 	--------------------
 	${Some Field}
 	'''
-	my_bug = bug.Bug.from_markup(markup)
+	my_bug = Bug.from_markup(markup)
 	output = my_bug.render(template)
 	ok_("the strangest bug" in output)
 	ok_("A test bug!" in output)
@@ -77,4 +77,7 @@ def test_render():
 	output = my_bug.render(template)
 	ok_("Oops: " in output)
 
+@raises(bugger.BackendConnectionError)
+def test_raises_BackendConnectionError():
+	Mantis('http://not a url').bug(42)
 
