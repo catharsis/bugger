@@ -6,7 +6,6 @@ import pydoc
 from backends import mantis
 import string
 from ConfigParser import SafeConfigParser, NoSectionError
-__all__=['BugNotFound', 'BuggerLoginError', 'BugRenderError', 'BackendConnectionError']
 from exceptions import *
 
 class DefaultBugTemplate(string.Template):
@@ -106,6 +105,8 @@ def main_func():
 			bugger.login(args.username, args.password)
 
 		output = args.func(bugger, args)
+	except BugNotFound:
+		output = "Sorry, that bug does not exist"
 	except BuggerLoginError:
 		output = "Login failed for user '%s', please check your username and password" % username
 
